@@ -202,6 +202,25 @@ public class Main {
 									System.out.println(ute.toString());
 								}
 							}
+							System.out.println("Prestiti in corso: ");
+							String sql = "SELECT prestiti.inizio_prestito,libri.id,libri.titolo,libri.ISBN FROM `prestiti` INNER JOIN libri INNER JOIN utenti"
+									+ " ON utenti.id = prestiti.id_utente AND libri.id = prestiti.id_libro WHERE prestiti.id_utente= "
+									+ ricerca2.id;
+							try (PreparedStatement ps = conn.prepareStatement(sql)) {
+								try (ResultSet rs = ps.executeQuery()) {
+									while (rs.next()) {
+										String inizio = rs.getString("inizio_prestito");
+										int idLibro = rs.getInt("libri.id");
+										String titLibro = rs.getString("titolo");
+										String isbnLibro = rs.getString("ISBN");
+										System.out.println("Inizio prestito: " + inizio + " - Id libro: " + idLibro
+												+ " - Titolo: " + titLibro + " - ISBN: " + isbnLibro);
+										System.out.println("____________________________________");
+										System.out.println();
+									}
+
+								}
+							}
 							break;
 						case ("b"):
 							break;
@@ -323,7 +342,7 @@ public class Main {
 											ps.setString(1, inizioprest);
 											ps.setInt(2, idUtePr);
 											ps.setInt(3, idLibPr);
-											ps.setString(4,"aperto");
+											ps.setString(4, "aperto");
 											ps.executeUpdate();
 										}
 										try (PreparedStatement ps2 = conn.prepareStatement(sql)) {
@@ -341,14 +360,15 @@ public class Main {
 									String qntfin = String.valueOf(lib.qnt + 1);
 									String fineprest = String.valueOf(LocalDate.now());
 									String sql = "UPDATE libri SET qnt = " + qntfin + " WHERE libri.id= " + idLibPr;
-									String sql2 = "UPDATE prestiti SET fine_prestito = ? , storico = ? WHERE id_libro= " + idLibPr +" AND id_utente= "+idUtePr+" AND storico= ?";
+									String sql2 = "UPDATE prestiti SET fine_prestito = ? , storico = ? WHERE id_libro= "
+											+ idLibPr + " AND id_utente= " + idUtePr + " AND storico= ?";
 									try (PreparedStatement ps = conn.prepareStatement(sql)) {
 										ps.executeUpdate();
 									}
 									try (PreparedStatement ps2 = conn.prepareStatement(sql2)) {
 										ps2.setString(1, fineprest);
-										ps2.setString(2,"chiuso");
-										ps2.setString(3,"aperto");
+										ps2.setString(2, "chiuso");
+										ps2.setString(3, "aperto");
 										ps2.executeUpdate();
 									}
 									System.out.println("Restituzione effettuata");
@@ -742,7 +762,94 @@ public class Main {
 
 					break;
 				case ("5"):
-					break;
+					// Reportistica
+					System.out.println("Stampa storico ordini:");
+					String sql5 = "SELECT prestiti.id,prestiti.inizio_prestito,prestiti.fine_prestito,prestiti.id_utente,libri.titolo,prestiti.storico FROM `prestiti` INNER JOIN\r\n"
+							+ "libri ON libri.id = prestiti.id_libro ORDER BY prestiti.id DESC";
+					try (PreparedStatement ps = conn.prepareStatement(sql5)) {
+						try (ResultSet rs = ps.executeQuery()) {
+							while (rs.next()) {
+								int id = rs.getInt("id");
+								String inizio = rs.getString("inizio_prestito");
+								String fine = rs.getString("fine_prestito");
+								int idUt = rs.getInt("id_utente");
+								String titolo = rs.getString("titolo");
+								String storico = rs.getString("storico");
+								System.out.println("ID: " + id + " - Inizio prestito: " + inizio + " - Fine prestito: "
+										+ fine + " - ID utente: " + idUt + " - Titolo: " + titolo + " - Storico: "
+										+ storico);
+
+							}
+						}
+					}
+					System.out.println();
+					String sql6 = "";
+					System.out.println(
+							"(1-Visualizza prestiti in corso,2-Ordina per titolo,3-Ordina per autore,4-Ordina per genere,B-Torna indietro)");
+					String scelta5 = sc.nextLine().toLowerCase();
+					while (!(scelta5.equals("1") || scelta5.equals("2") || scelta5.equals("3") || scelta5.equals("4")
+							|| scelta5.equals("5") || scelta5.equals("b"))) {
+						System.out.println(
+								"(1-Visualizza prestiti in corso,2-Ordina per titolo,3-Ordina per autore,4-Ordina per genere,B-Torna indietro)");
+						scelta5 = sc.nextLine().toLowerCase();
+					}
+					if (scelta5.equals("1")) {
+						sql6 = "SELECT prestiti.id,prestiti.inizio_prestito,prestiti.fine_prestito,prestiti.id_utente,libri.titolo,prestiti.storico FROM `prestiti` INNER JOIN\r\n"
+								+ "libri ON libri.id = prestiti.id_libro WHERE storico = \"aperto\" ORDER BY prestiti.id DESC";
+						try (PreparedStatement ps = conn.prepareStatement(sql6)) {
+							try (ResultSet rs = ps.executeQuery()) {
+								while (rs.next()) {
+									int id = rs.getInt("id");
+									String inizio = rs.getString("inizio_prestito");
+									String fine = rs.getString("fine_prestito");
+									int idUt = rs.getInt("id_utente");
+									String titolo = rs.getString("titolo");
+									String storico = rs.getString("storico");
+									System.out.println("ID: " + id + " - Inizio prestito: " + inizio
+											+ " - Fine prestito: " + fine + " - ID utente: " + idUt + " - Titolo: "
+											+ titolo + " - Storico: " + storico);
+								}
+							}
+						}
+					} else if (scelta5.equals("2")) {
+						sql6 = "SELECT libri.titolo,COUNT(libri.id) FROM prestiti INNER JOIN libri ON libri.id = prestiti.id_libro GROUP BY libri.titolo ORDER BY COUNT(libri.id) DESC";
+						try (PreparedStatement ps = conn.prepareStatement(sql6)) {
+							try (ResultSet rs = ps.executeQuery()) {
+								while (rs.next()) {
+									String titolo = rs.getString("titolo");
+									int cont = rs.getInt("COUNT(libri.id)");
+
+									System.out.println("Titolo: " + titolo + " - Numero prestiti: " + cont);
+								}
+							}
+						}
+					} else if (scelta5.equals("3")) {
+						sql6 = "SELECT autori.autore,COUNT(autori.id) FROM prestiti INNER JOIN autori INNER JOIN libri ON autori.id = libri.id_autore AND libri.id = prestiti.id_libro GROUP BY autori.autore ORDER BY COUNT(autori.id) DESC";
+						try (PreparedStatement ps = conn.prepareStatement(sql6)) {
+							try (ResultSet rs = ps.executeQuery()) {
+								while (rs.next()) {
+									String autore = rs.getString("autore");
+									int cont = rs.getInt("COUNT(autori.id)");
+
+									System.out.println("Autore: " + autore + " - Numero prestiti: " + cont);
+								}
+							}
+						}
+					} else if (scelta5.equals("4")) {
+						sql6 = "SELECT generi.genere,COUNT(generi.id) FROM prestiti INNER JOIN generi INNER JOIN libri ON generi.id = libri.id_genere AND libri.id = prestiti.id_libro GROUP BY generi.genere ORDER BY COUNT(generi.id) DESC";
+						try (PreparedStatement ps = conn.prepareStatement(sql6)) {
+							try (ResultSet rs = ps.executeQuery()) {
+								while (rs.next()) {
+									String genere = rs.getString("genere");
+									int cont = rs.getInt("COUNT(generi.id)");
+
+									System.out.println("Genere: " + genere + " - Numero prestiti: " + cont);
+								}
+							}
+						}
+					}else 
+						break;
+
 				case ("6"):
 					break;
 
