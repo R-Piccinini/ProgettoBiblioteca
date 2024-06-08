@@ -23,11 +23,11 @@ public class Main {
 		String url = "jdbc:mysql://localhost:3306/biblioteca";
 
 		System.out.println("Tentativo di connessione al db..."); // inizio programma
-		try (Connection conn = DriverManager.getConnection(url, "root", "")) { // connessione
-			System.out.println("connessione riuscita");
+		try (Connection conn = DriverManager.getConnection(url, "root", "")) { // connessione al database
+			System.out.println("Connessione riuscita");
 
-			do {
-				ArrayList<Utente> elencoUtenti = new ArrayList<Utente>(); // preparazione array e SQL
+			do { //inizio ciclo selezione programmi
+				ArrayList<Utente> elencoUtenti = new ArrayList<Utente>(); // preparazione array e string SQL
 				ArrayList<Libro> elencoLibri = new ArrayList<Libro>();
 				ArrayList<Autore> elencoAutori = new ArrayList<Autore>();
 				ArrayList<Genere> elencoGeneri = new ArrayList<Genere>();
@@ -37,9 +37,8 @@ public class Main {
 				String sqlAutori = "SELECT * from autori";
 				String sqlGeneri = "SELECT * from generi";
 				String sqlCasaEd = "SELECT * from case_editrici";
-				// String sqlPrestiti="SELECT * from prestiti";
 
-				try (PreparedStatement ps = conn.prepareStatement(sqlUtenti)) {
+				try (PreparedStatement ps = conn.prepareStatement(sqlUtenti)) { //carico utenti
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
 
@@ -56,7 +55,7 @@ public class Main {
 					}
 				}
 
-				try (PreparedStatement ps = conn.prepareStatement(sqlLibri)) {
+				try (PreparedStatement ps = conn.prepareStatement(sqlLibri)) { //carico libri
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
 							Libro l = new Libro();
@@ -74,7 +73,7 @@ public class Main {
 					}
 				}
 
-				try (PreparedStatement ps = conn.prepareStatement(sqlAutori)) {
+				try (PreparedStatement ps = conn.prepareStatement(sqlAutori)) { //carico autori
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
 							Autore a = new Autore();
@@ -87,7 +86,7 @@ public class Main {
 					}
 				}
 
-				try (PreparedStatement ps = conn.prepareStatement(sqlGeneri)) {
+				try (PreparedStatement ps = conn.prepareStatement(sqlGeneri)) { //carico generi
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
 							Genere g = new Genere();
@@ -100,7 +99,7 @@ public class Main {
 					}
 				}
 
-				try (PreparedStatement ps = conn.prepareStatement(sqlCasaEd)) {
+				try (PreparedStatement ps = conn.prepareStatement(sqlCasaEd)) { // carico casa ed.
 					try (ResultSet rs = ps.executeQuery()) {
 						while (rs.next()) {
 							CasaEd ce = new CasaEd();
@@ -120,6 +119,7 @@ public class Main {
 				while (!(scelta.equals("1") || scelta.equals("2") || scelta.equals("3") || scelta.equals("4")
 						|| scelta.equals("5") || scelta.equals("6"))) {// check scelta
 					System.out.println("Scelta non valida");
+					System.out.println();
 					System.out.println("Seleziona Programma: (1-Gestione Utenti),(2-Gestione Magazzino),"
 							+ "(3-Gestione Libri),(4-Ricerca e Filtraggio),(5-Reportistica),(6-Esci)");
 					scelta = sc.nextLine();
@@ -136,7 +136,6 @@ public class Main {
 					switch (scelta2) {
 					case ("1"):
 						// signup
-						System.out.println("prova");
 						Utente u = new Utente();
 						boolean trovato = false;
 						System.out.println("Nome: ");
@@ -169,7 +168,7 @@ public class Main {
 								ps.setString(4, u.telefono);
 								ps.setString(5, u.CF);
 								ps.executeUpdate();
-								System.out.println("Utente correttamente inserito.");
+								System.out.println("Utente correttamente inserito");
 							}
 						}
 						break;
@@ -182,6 +181,7 @@ public class Main {
 							scelta3 = sc.nextLine();
 						}
 						switch (scelta3) {
+						//ricerca per cf
 						case ("1"):
 							System.out.println("Inserisci CF: ");
 							Utente ricerca = new Utente();
@@ -193,6 +193,7 @@ public class Main {
 							}
 							break;
 						case ("2"):
+							//ricerca per ID
 							System.out.println("Inserisci numero tessera: ");
 							Utente ricerca2 = new Utente();
 							ricerca2.id = sc.nextInt();
@@ -202,6 +203,8 @@ public class Main {
 									System.out.println(ute.toString());
 								}
 							}
+							System.out.println();
+							//visualizzazione dei prestiti utente
 							System.out.println("Prestiti in corso: ");
 							String sql = "SELECT prestiti.inizio_prestito,libri.id,libri.titolo,libri.ISBN FROM `prestiti` INNER JOIN libri INNER JOIN utenti"
 									+ " ON utenti.id = prestiti.id_utente AND libri.id = prestiti.id_libro WHERE prestiti.id_utente= "
@@ -249,17 +252,17 @@ public class Main {
 									String casaed = rs.getString("casa_editrice");
 									String ISBN = rs.getString("ISBN");
 									int qnt = rs.getInt("qnt");
-									System.out.println("Id: " + id + " Titolo: " + titolo + " Autore: " + autore
-											+ " Anno: " + anno + " Genere: " + genere + " Casa editrice: " + casaed
-											+ " ISBN: " + ISBN + " Qnt: " + qnt);
+									System.out.println("Id: " + id + " - Titolo: " + titolo + " - Autore: " + autore
+											+ " - Anno: " + anno + " - Genere: " + genere + " - Casa editrice: " + casaed
+											+ " - ISBN: " + ISBN + " - Qnt: " + qnt);
 									System.out.println("____________________________________");
 									System.out.println();
 								}
 							}
 						}
-
+						//richiesta restock automatica se poche copie in magazzino
 						if (lib.qnt <= 3) {
-							System.out.println("vuoi ordinare altre copie? si per confermare");
+							System.out.println("vuoi ordinare altre copie di ("+lib.titolo+") ? si per confermare");
 							String risposta = sc.nextLine().toLowerCase();
 							if (risposta.equals("si")) {
 								System.out.println("inserisci qnt da ordinare:");
@@ -293,8 +296,9 @@ public class Main {
 						boolean trovato4 = false;
 						int idLibPr;
 						int idUtePr;
+						//ricerca libro e utente negli array
 						do {
-							System.out.println("Inserire id libro:");
+							System.out.println("Inserire ID libro:");
 							idLibPr = sc.nextInt();
 							sc.nextLine();
 							for (Libro lib : elencoLibri) {
@@ -310,7 +314,7 @@ public class Main {
 
 						trovato4 = false;
 						do {
-							System.out.println("Inserire id utente:");
+							System.out.println("Inserire ID utente:");
 							idUtePr = sc.nextInt();
 							sc.nextLine();
 							for (Utente ute : elencoUtenti) {
@@ -323,12 +327,13 @@ public class Main {
 								System.out.println("ID Utente non valido");
 						} while (!trovato4);
 						System.out.println();
-						System.out.println("1-Prestito,2-Restituzione,b-Torna indietro");
+						System.out.println("(1-Prestito),(2-Restituzione),(B-Torna indietro)");
 						String scelta4 = sc.nextLine().toLowerCase();
 						while (!(scelta4.equals("1") || scelta4.equals("2") || scelta4.equals("b"))) {
-							System.out.println("1-Prestito,2-Restituzione,b-Torna indietro");
+							System.out.println("(1-Prestito),(2-Restituzione),(B-Torna indietro)");
 							scelta4 = sc.nextLine();
 						}
+						//prestito
 						if (scelta4.equals("1")) {
 							for (Libro lib : elencoLibri) {
 								if (lib.id == idLibPr) {
@@ -354,7 +359,9 @@ public class Main {
 								}
 							}
 
-						} else if (scelta4.equals("2")) {
+						} 
+						//restituzione
+						else if (scelta4.equals("2")) {
 							for (Libro lib : elencoLibri) {
 								if (lib.id == idLibPr) {
 									String qntfin = String.valueOf(lib.qnt + 1);
@@ -383,9 +390,9 @@ public class Main {
 						Genere g = new Genere();
 						CasaEd ce = new CasaEd();
 						boolean trovato = false;
-						System.out.print("titolo: ");// inserimento titolo
+						System.out.print("Titolo: ");// inserimento titolo
 						l.titolo = sc.nextLine();
-						System.out.print("autore: ");// inserimento autore
+						System.out.print("Autore: ");// inserimento autore
 						a.autore = sc.nextLine();
 						for (Autore aut : elencoAutori) {
 							if (aut.autore.equals(a.autore)) {
@@ -393,6 +400,7 @@ public class Main {
 								trovato = true;
 							}
 						}
+						//check se autore presente in db altrimenti aggiunta
 						if (trovato) {
 							l.idAutore = a.id;
 							trovato = false;
@@ -408,18 +416,18 @@ public class Main {
 								System.err.println("Si è verificato un errore: " + e.getMessage());
 							}
 						}
-						System.out.println("anno :");// inserimento anno
+						System.out.println("Anno :");// inserimento anno
 						l.anno = sc.nextInt();
 						sc.nextLine();
 
-						System.out.println("genere :");// inserimento genere
+						System.out.println("Genere :");// inserimento genere
 						g.genere = sc.nextLine();
 						for (Genere gen : elencoGeneri) {
 							if (gen.genere.equals(g.genere)) {
 								g.id = gen.id;
 								trovato = true;
 							}
-						}
+						}//check se genere presente in db altrimenti aggiunta
 						if (trovato) {
 							l.idGenere = g.id;
 							trovato = false;
@@ -436,14 +444,14 @@ public class Main {
 							}
 						}
 
-						System.out.println("casa editrice :");// inserimento CE
+						System.out.println("Casa editrice :");// inserimento CE
 						ce.casaEditrice = sc.nextLine();
 						for (CasaEd cEd : elencoCasaEd) {
 							if (cEd.casaEditrice.equals(ce.casaEditrice)) {
 								ce.id = cEd.id;
 								trovato = true;
 							}
-						}
+						}//check se CE presente in db altrimenti aggiunta
 						if (trovato) {
 							l.idCasaEd = ce.id;
 							trovato = false;
@@ -461,7 +469,7 @@ public class Main {
 						}
 						System.out.println("ISBN: ");// inserimento isbn
 						l.isbn = sc.nextLine();
-						System.out.println("quantità: ");// inserimento qnt
+						System.out.println("Quantità: ");// inserimento qnt
 						l.qnt = sc.nextInt();
 						sc.nextLine();
 
@@ -496,18 +504,20 @@ public class Main {
 						Autore a2 = new Autore();
 						Genere g2 = new Genere();
 						CasaEd ce2 = new CasaEd();
-						System.out.println("Inserire id libro da modificare: ");
+						System.out.println("Inserire ID libro da modificare: ");
 						l2.id = sc.nextInt();
 						sc.nextLine();
 						boolean trovato2 = false;
-
+						//ricerca libro array
 						for (Libro lib : elencoLibri) {
 							if (lib.id == l2.id) {
 								trovato2 = true;
 
 							}
 						}
+						
 						if (trovato2) {
+							//stesso procedimento di INSERT
 							String sql3 = "SELECT libri.id,libri.titolo,autori.autore,libri.anno,generi.genere,case_editrici.casa_editrice,libri.ISBN,libri.qnt "
 									+ "FROM libri INNER JOIN autori INNER JOIN generi INNER JOIN "
 									+ "case_editrici ON autori.id=libri.id_autore AND generi.id = libri.id_genere AND case_editrici.id = libri.id_casaed WHERE libri.id = "
@@ -523,9 +533,9 @@ public class Main {
 										String casaed = rs.getString("casa_editrice");
 										String ISBN = rs.getString("ISBN");
 										int qnt = rs.getInt("qnt");
-										System.out.println("Id: " + id + " Titolo: " + titolo + " Autore: " + autore
-												+ " Anno: " + anno + " Genere: " + genere + " Casa editrice: " + casaed
-												+ " ISBN: " + ISBN + " Qnt: " + qnt);
+										System.out.println("Id: " + id + " - Titolo: " + titolo + " - Autore: " + autore
+												+ " - Anno: " + anno + " - Genere: " + genere + " - Casa editrice: " + casaed
+												+ " - ISBN: " + ISBN + " - Qnt: " + qnt);
 									}
 								}
 							}
@@ -616,10 +626,8 @@ public class Main {
 
 							String sql2 = "UPDATE libri SET titolo = ?,id_autore = ?,anno = ?,id_genere= ?,id_casaed = ?,ISBN = ? WHERE libri.id = ?";
 
-							try (PreparedStatement ps = conn.prepareStatement(sql2)) { // provo a creare l'istruzione
-																						// sql
+							try (PreparedStatement ps = conn.prepareStatement(sql2)) { 
 
-								// imposto i valori dei parametri
 								ps.setString(1, l2.titolo);
 								ps.setInt(2, l2.idAutore);
 								ps.setInt(3, l2.anno);
@@ -628,12 +636,10 @@ public class Main {
 								ps.setString(6, l2.isbn);
 								ps.setInt(7, l2.id);
 
-								int righeInteressate = ps.executeUpdate(); // eseguo l'istruzione
-								System.out.println("Righe inserite: " + righeInteressate);
+								int righeInteressate = ps.executeUpdate(); 
+								System.out.println("Righe modificate: " + righeInteressate);
 
-							} catch (Exception e) { // catch che gestisce tutti i tipi di eccezione
-								// si è verificato un problema. L'oggetto e (di tipo Exception) contiene
-								// informazioni sull'errore verificatosi
+							} catch (Exception e) { 
 								System.err.println("Si è verificato un errore: " + e.getMessage());
 							}
 
@@ -653,6 +659,7 @@ public class Main {
 
 							}
 						}
+						//ricerca libro array
 						if (trovato3) {
 							String sql3 = "SELECT libri.id,libri.titolo,autori.autore,libri.anno,generi.genere,case_editrici.casa_editrice,libri.ISBN,libri.qnt "
 									+ "FROM libri INNER JOIN autori INNER JOIN generi INNER JOIN "
@@ -669,18 +676,19 @@ public class Main {
 										String casaed = rs.getString("casa_editrice");
 										String ISBN = rs.getString("ISBN");
 										int qnt = rs.getInt("qnt");
-										System.out.println("Id: " + id + " Titolo: " + titolo + " Autore: " + autore
-												+ " Anno: " + anno + " Genere: " + genere + " Casa editrice: " + casaed
-												+ " ISBN: " + ISBN + " Qnt: " + qnt);
+										System.out.println("Id: " + id + " - Titolo: " + titolo + " - Autore: " + autore
+												+ " - Anno: " + anno + " - Genere: " + genere + " - Casa editrice: " + casaed
+												+ " - ISBN: " + ISBN + " - Qnt: " + qnt);
 									}
 								}
 							}
-							System.out.println("Premi b per annullare");
+							//conferma cancellazione
+							System.out.println("Premi B per annullare");
 							String conferma = sc.nextLine().toLowerCase();
 							if (!(conferma.equals("b"))) {
 								sql3 = "DELETE FROM libri WHERE libri.id =" + idcanc;
 								try (PreparedStatement ps = conn.prepareStatement(sql3)) {
-									int righeInteressate = ps.executeUpdate(); // eseguo l'istruzione
+									int righeInteressate = ps.executeUpdate(); // 
 									System.out.println("Righe cancellate: " + righeInteressate);
 								}
 							} else
@@ -698,14 +706,14 @@ public class Main {
 					String criterioQuery;
 					String valoreQuery;
 					System.out.println(
-							"Cerca per: (1-titolo,2-autore,3-anno,4-genere,5-casa editrice,6-ISBN) b per annullare");
+							"Cerca per: (1-titolo),(2-autore),(3-anno),(4-genere),(5-casa editrice),(6-ISBN) B per annullare");
 					String risposta = sc.nextLine();
 					while (!(risposta.equals("1") || risposta.equals("2") || risposta.equals("3")
 							|| risposta.equals("4") || risposta.equals("5") || risposta.equals("6")
 							|| risposta.equals("b"))) {
 						System.out.println("filtro non valido");
 						System.out
-								.println("(1-titolo,2-autore,3-anno,4-genere,5-casa editrice,6-ISBN) b per annullare)");
+								.println("(1-titolo),(2-autore),(3-anno),(4-genere),(5-casa editrice),(6-ISBN) B per annullare");
 						risposta = sc.nextLine();
 					}
 					if (risposta.equals("1")) {
@@ -735,7 +743,7 @@ public class Main {
 					} else {
 						break;
 					}
-
+					//stringa dinamica che varia in base al criterio di ricerca
 					String sql = "SELECT libri.id,libri.titolo,autori.autore,libri.anno,generi.genere,case_editrici.casa_editrice,libri.ISBN,libri.qnt "
 							+ "FROM libri INNER JOIN autori INNER JOIN generi INNER JOIN "
 							+ "case_editrici ON autori.id=libri.id_autore AND generi.id = libri.id_genere AND case_editrici.id = libri.id_casaed WHERE "
@@ -751,9 +759,9 @@ public class Main {
 								String casaed = rs.getString("casa_editrice");
 								String ISBN = rs.getString("ISBN");
 								int qnt = rs.getInt("qnt");
-								System.out.println("Id: " + id + " Titolo: " + titolo + " Autore: " + autore + " Anno: "
-										+ anno + " Genere: " + genere + " Casa editrice: " + casaed + " ISBN: " + ISBN
-										+ " Qnt: " + qnt);
+								System.out.println("Id: " + id + " - Titolo: " + titolo + " - Autore: " + autore + " - Anno: "
+										+ anno + " - Genere: " + genere + " - Casa editrice: " + casaed + " - ISBN: " + ISBN
+										+ " - Qnt: " + qnt);
 								System.out.println("____________________________________");
 								System.out.println();
 							}
@@ -782,6 +790,7 @@ public class Main {
 							}
 						}
 					}
+					//selezione filtro
 					System.out.println();
 					String sql6 = "";
 					System.out.println(
@@ -856,9 +865,7 @@ public class Main {
 				}
 			} while (!(scelta.equals("6")));
 			System.out.println("Arrivederci"); // fine ciclo e chiusura programma
-		} catch (Exception e) { // catch che gestisce tutti i tipi di eccezione
-			// si è verificato un problema. L'oggetto e (di tipo Exception) contiene
-			// informazioni sull'errore verificatosi
+		} catch (Exception e) { //catch errore connessione
 			System.err.println("Si è verificato un errore: " + e.getMessage());
 		}
 		sc.close();
